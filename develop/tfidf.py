@@ -16,7 +16,7 @@ import numpy
 
 
 def news_vector_dict(title_scale, doc_scale):
-    file = codecs.open('_news_data.json', 'r', 'utf-8')
+    file = codecs.open('./data/_news_data.json', 'r', 'utf-8')
     news_dict = json.load(file)
     
     # 分词，在词之间加空格，重新组成文章
@@ -52,7 +52,7 @@ def news_vector_dict(title_scale, doc_scale):
         if i % 1000 == 0:
             print('i='+str(i))
             print(news_matrix[i][:10])
-    # file_output = codecs.open('_news_data_tfidf.json', 'w', 'utf-8')
+    # file_output = codecs.open('./data/_news_data_tfidf.json', 'w', 'utf-8')
     # json.dump(news_vector_dict, file_output)
     # print(tfidf_vectorizer.vocabulary_) 
     
@@ -63,7 +63,7 @@ def news_vector_dict(title_scale, doc_scale):
 
 
 def user_vector_dict(news_vector_dict, time_scalse):
-    file = codecs.open('_user_data_training.json', 'r', 'utf-8')
+    file = codecs.open('./data/_user_data_training_clean.json', 'r', 'utf-8')
     user_dict = json.load(file)
     
     j = 0
@@ -128,24 +128,54 @@ def k_n_n(news_dict, user_dict, k):
 title_scale = 0.5
 doc_scale = 1.0 - title_scale
 time_scale = 1.0
-k = 10
+k = 30
 news_vector_dict = news_vector_dict(title_scale, doc_scale)
 
 
-# In[ ]:
+# In[6]:
 
 
 user_vector_dict = user_vector_dict(news_vector_dict, time_scale)
 
 
-# In[ ]:
+# In[7]:
 
 
 n = k_n_n(news_vector_dict, user_vector_dict, k)
 
 
-# In[ ]:
+# In[8]:
 
 
 print(1)
+print(n[2][0])
+
+
+# In[9]:
+
+
+news_keys = []
+i = 0
+for news_key in news_vector_dict:
+    news_keys.append(news_key)
+
+result = {}
+i = 0
+for user_key in user_vector_dict:
+    indices = n[2*i+1][0].tolist()
+    user_news_keys = []
+    for index in indices:
+        user_news_keys.append(news_keys[index])
+    result.setdefault(user_key, user_news_keys)
+    if i < 10:
+        print(result[user_key])
+    i += 1
+
+
+# In[13]:
+
+
+file_output = codecs.open('./data/tfidf_result.json', 'w', 'utf-8')
+json.dump(result, file_output)
+file_output.close()
 
