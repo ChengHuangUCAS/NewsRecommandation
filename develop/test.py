@@ -14,10 +14,10 @@ import numpy
 
 
 def test(result_root):
-    f_user_data_validation = codecs.open('./data/_user_data_validation.json', 'r', 'utf-8')
+    f_user_data_validation = codecs.open('./data/_user_data_validation_clean.json', 'r', 'utf-8')
     f_result = codecs.open(result_root, 'r', 'utf-8')
     f_news_data = codecs.open('./data/_news_data.json', 'r', 'utf-8')
-    f_user_data_training = codecs.open('./data/_user_data_training.json', 'r', 'utf-8')
+    f_user_data_training = codecs.open('./data/_user_data_training_clean.json', 'r', 'utf-8')
     training = json.load(f_user_data_training)
     validation = json.load(f_user_data_validation)
     result = json.load(f_result)
@@ -70,8 +70,7 @@ def test(result_root):
 # In[17]:
 
 
-print(len(validation.keys()))
-print(len(training.keys()))
+
 
 
 # In[18]:
