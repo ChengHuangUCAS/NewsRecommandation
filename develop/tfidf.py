@@ -15,11 +15,13 @@ import numpy
 # In[2]:
 
 
-def news_vector_dict(title_scale, doc_scale):
-    file = codecs.open('./data/_news_data.json', 'r', 'utf-8')
+def news_vector_dict(title_scale, doc_scale, min_df):
+    file = codecs.open('./data/_news_data_clean.json', 'r', 'utf-8')
     news_dict = json.load(file)
     
     # 分词，在词之间加空格，重新组成文章
+#     stop_file = codecs.open('./data/stop_words.txt', 'r', 'utf-8')
+#     stop_list = stop_file.read().split('\n')
     i = 0
     title_array = []
     doc_array = []
@@ -35,9 +37,13 @@ def news_vector_dict(title_scale, doc_scale):
             print(i)
     
     # tf-idf算法，文章转化为一个归一化的向量
-    tfidf_vectorizer = TfidfVectorizer(min_df = 10)
+    tfidf_vectorizer = TfidfVectorizer(min_df = min_df)
     doc_matrix = tfidf_vectorizer.fit_transform(doc_array)
     title_matrix = tfidf_vectorizer.transform(title_array)
+    
+    word_bag = {}
+    for key in tfidf_vectorizer.vocabulary_:
+        word_bag.setdefault(tfidf_vectorizer.vocabulary_[key], key)
     
     # 计算文章加权vector
     news_matrix = (title_matrix.todense() * title_scale + doc_matrix.todense() * doc_scale).tolist()
@@ -46,15 +52,25 @@ def news_vector_dict(title_scale, doc_scale):
     i = 0
     news_vector_dict = {}
     for news_key in news_dict:
-#         news_vector = title_matrix[i].todense()
         news_vector_dict.setdefault(news_key, news_matrix[i])
         i += 1
         if i % 1000 == 0:
             print('i='+str(i))
             print(news_matrix[i][:10])
-    # file_output = codecs.open('./data/_news_data_tfidf.json', 'w', 'utf-8')
-    # json.dump(news_vector_dict, file_output)
-    # print(tfidf_vectorizer.vocabulary_) 
+            
+         #打印文章关键词和权重
+        if i < 5:
+            news_words = []
+            news_words_weight = []
+            for j in range(len(news_matrix[i])):
+                if news_matrix[i][j] > 0:
+                    news_words.append(word_bag[j])
+                    news_words_weight.append(news_matrix[i][j])
+            print(news_words)
+            print(news_words_weight)
+            
+                    
+
     
     return news_vector_dict
 
@@ -127,31 +143,38 @@ def k_n_n(news_dict, user_dict, k):
 
 title_scale = 0.5
 doc_scale = 1.0 - title_scale
-time_scale = 1.0
-k = 30
 news_vector_dict = news_vector_dict(title_scale, doc_scale)
 
 
 # In[6]:
 
 
+time_scale = 1.0
 user_vector_dict = user_vector_dict(news_vector_dict, time_scale)
 
 
 # In[7]:
 
 
+k = 30
 n = k_n_n(news_vector_dict, user_vector_dict, k)
 
 
 # In[8]:
 
 
-print(1)
-print(n[2][0])
+# k = 10
+# n = k_n_n(news_vector_dict, user_vector_dict, k)
 
 
 # In[9]:
+
+
+print(1)
+print(n[:6])
+
+
+# In[10]:
 
 
 news_keys = []
@@ -159,20 +182,32 @@ i = 0
 for news_key in news_vector_dict:
     news_keys.append(news_key)
 
+    
+file = codecs.open('./data/_user_data_training_clean.json', 'r', 'utf-8')
+user_news_dict = json.load(file)
+
 result = {}
 i = 0
-for user_key in user_vector_dict:
+lens = []
+for user_key in user_news_dict:
     indices = n[2*i+1][0].tolist()
     user_news_keys = []
     for index in indices:
-        user_news_keys.append(news_keys[index])
+        user_news_key = news_keys[index]
+        if user_news_key not in user_news_dict[user_key]:
+            user_news_keys.append(user_news_key)
     result.setdefault(user_key, user_news_keys)
-    if i < 10:
-        print(result[user_key])
+#     if i < 100:
+#         print(len(result[user_key]))
+#         print(result[user_key])
+#         print(user_news_dict[user_key])
     i += 1
+    lens.append(len(result[user_key]))
+lens.sort()
+print(lens[:10])
 
 
-# In[13]:
+# In[11]:
 
 
 file_output = codecs.open('./data/tfidf_result.json', 'w', 'utf-8')
