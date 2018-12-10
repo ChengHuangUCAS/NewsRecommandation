@@ -10,7 +10,15 @@ import codecs
 import numpy
 
 
-# In[16]:
+# In[56]:
+
+
+def time_back(t):
+    a = int(t-1393603200)
+    return int(a / 86400)
+
+
+# In[69]:
 
 
 def test(result_root):
@@ -23,10 +31,13 @@ def test(result_root):
     result = json.load(f_result)
     news_data = json.load(f_news_data)
     
-    
+    z=0
+    q=0
+    user_num = 0
     precision = 0
     recall = 0
     for key in validation:
+        user_num += 1
         if key in result:
             rec_num = len(result[key])
         else:
@@ -34,49 +45,57 @@ def test(result_root):
         act_num = len(validation[key])
         TP = 0
         for news_id in result[key]:
+            q+=1
     #         print(news_data[news_id][0])
             if news_id in validation[key]:
                 TP+=1
 
-    #     print(key)
-    #     print("\n")
-    #     for a in validation[key]:
-    #         print(news_data[a][0])
-    #     print("\n")
-    #     for a in training[key]:
-    #         print(news_data[a][0])
-    #     print("\n")
-    #     if TP!=0:
-    #         print(key)
-    #         for a in result[key]:
-    #             print(news_data[a][0])
-    #         print("\n")
-    #         for a in validation[key]:
-    #             print(news_data[a][0])
-    #         print("\n")
-    #         for a in training[key]:
-    #             print(news_data[a][0])
-    #         print("\n")
+#         print(key)
+#         for a in validation[key]:
+#             print(news_data[a][0])
+#         print("\n")
+#         for a in training[key]:
+#             print(news_data[a][0])
+#         print("\n")
+
+        for a in validation[key]:
+            if time_back(news_data[a][2]) < 10:
+                z+=1
+#         if TP==0:
+#             print(key)
+#             for a in result[key]:
+#                 print(news_data[a][0], time_back(news_data[a][2]))
+#             print("\n")
+#             for a in validation[key]:
+#                 print(news_data[a][0], time_back(news_data[a][2]),time_back(validation[key][a]))
+#             print("\n")
+#             for a in training[key]:
+#                 print(news_data[a][0], time_back(news_data[a][2]),time_back(training[key][a]))
+#             print("\n")
     #     break
+    
+        #print(precision, recall)
         precision += TP / rec_num
         recall += TP / act_num
-
+    precision = 100 * precision / user_num 
+    recall = 100 * recall / user_num
+    print(z,q)
     f_user_data_validation.close()
     f_result.close()
     print("precision: ", precision )
     print("recall: ", recall)
 
 
-# In[17]:
+# In[ ]:
 
 
 
 
 
-# In[18]:
+# In[70]:
 
 
-test('./data/CF_NMF_recommend_matrix.json')
+test('./data/tfidf_result.json')
 
 
 # In[ ]:

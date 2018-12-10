@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[43]:
+# In[11]:
 
 
 # -*- coding: utf-8 -*-
@@ -15,7 +15,7 @@ import operator as op
 fp = sys.stdout
 
 
-# In[70]:
+# In[44]:
 
 
 def preprocess():
@@ -28,6 +28,8 @@ def preprocess():
     f_user_data_training_clean = codecs.open('./data/_user_data_training_clean.json', 'w', 'utf-8')
     f_user_data_validation_clean = codecs.open('./data/_user_data_validation_clean.json', 'w', 'utf-8')
     f_news_data_clean = codecs.open('./data/_news_data_clean.json','w','utf-8')
+    f_news_data_1to20_clean = codecs.open('./data/_news_data_1to20_clean.json', 'w', 'utf-8')
+    f_news_data_15to30_clean = codecs.open('./data/_news_data_15to30_clean.json', 'w', 'utf-8')
     i=0
     user_data_training = {}
     news_data = {}
@@ -35,6 +37,8 @@ def preprocess():
     user_data_training_clean = {}
     user_data_validation_clean = {}
     news_data_clean={}
+    news_data_1to20_clean={}
+    news_data_15to30_clean={}
     #news_data_validation = {}
     print("preprocessing starts...")
     for line in f:
@@ -53,11 +57,13 @@ def preprocess():
         click_time = int(partitions[2])
         # delete all dirty record
         if partitions[4] == 'NULL' or partitions[3] == '404':
+#         if partitions[3] == '404':
             continue
         # deal with news_time
         try:
             tstp = transform_time(partitions[5])  
         except:
+#             continue
             tstp = int(1393603200)
         # data = {"user_id": user_id, "news_id": news_id, "click_time": click_time,
         #        "title": partitions[3], "article": partitions[4], "news_time": tstp}
@@ -74,7 +80,7 @@ def preprocess():
             if user_id not in user_data_validation:
                 user_data_validation.setdefault(user_id, {})
             user_data_validation[user_id].setdefault(news_id, click_time)
-            
+        
         if news_id in news_data:
             if len(partitions[4]) > len(news_data[news_id][1]):
                 # if necessary,
@@ -101,7 +107,7 @@ def preprocess():
     z = 0
     for i in user_list:
         # those who read little news in one period are also not considered
-        if len(user_data_validation[i]) >= 3 and len(user_data_training[i]) >= 3:
+        if len(user_data_validation[i]) >= 5 and len(user_data_training[i]) >= 5:
             z+=1
             user_data_validation_clean.setdefault(i, user_data_validation[i])
             user_data_training_clean.setdefault(i, user_data_training[i])
@@ -113,8 +119,12 @@ def preprocess():
                     news_list.append(n)
     for n in news_list:
         news_data_clean.setdefault(n, news_data[n])
-#     print(len(user_list)
-#     print(z)
+        zz=int(news_data[n][2] - 1393603200)/86400
+        if zz <= 20:
+            news_data_1to20_clean.setdefault(n,news_data[n])
+        if zz > 15:
+            news_data_15to30_clean.setdefault(n, news_data[n])
+            
     print("recleaning phase done.")
     print("\nstatistics:")
     print("\ttotal number of users:                     10000")
@@ -125,6 +135,13 @@ def preprocess():
     print("\tnumber of valid news:                     ", len(news_data))
     print("\tnumber of news read by valid users:       ", len(news_data_clean))
     
+#     z=0
+#     f = codecs.open('./data/user_click_data.txt', 'r', 'utf-8')
+#     for line in f:
+#         partitions = line.split('\t')
+#         if int(partitions[0]) in user_list:
+#             z+=1
+#     print(z)
     # dump into files
     json.dump(user_data_training_clean, f_user_data_training_clean)
     json.dump(user_data_validation_clean, f_user_data_validation_clean)
@@ -132,6 +149,8 @@ def preprocess():
     json.dump(user_data_validation, f_user_data_validation)
     json.dump(news_data, f_news_data)
     json.dump(news_data_clean, f_news_data_clean)
+    json.dump(news_data_1to20_clean, f_news_data_1to20_clean)
+    json.dump(news_data_15to30_clean, f_news_data_15to30_clean)
     # close files
 #     f_training.close()
 #     f_validation.close()
@@ -141,24 +160,30 @@ def preprocess():
     f_user_data_training_clean.close()
     f_user_data_validation_clean.close()
     f_news_data_clean.close()
+    f.close()
     
 def transform_time(t):
     # t :
     # 2014年03月xx日xx:xx
-    tmp = t.split("月")
+    tmp = t.split("年")
+    year = str(tmp[0])
+    tmp = tmp[1].split("月")
+    mon = str(tmp[0])
     tmp = tmp[1].split("日")
-    day = int(tmp[0])
+    day = str(tmp[0])
     tmp = tmp[1].split(":")
-    hour = int(tmp[0])
-    minute = int(tmp[1].split("\r")[0])
+    hour = str(tmp[0])
+    minute = str(tmp[1].split("\r")[0])
     # 1393603200 >>> 2014-03-01 00:00:00
-    timestamp = 1393603200 + (day - 1) * 86400 + hour * 3600 + minute * 60
-    return int(timestamp)
+    a = year+'-'+mon+'-'+day+' '+hour+':'+minute+':'+'00'
+    timeArray = time.strptime(a, "%Y-%m-%d %H:%M:%S")
+    timeStamp = int(time.mktime(timeArray))
+    return int(timeStamp)
 
 preprocess()
 
 
-# In[ ]:
+# In[43]:
 
 
 a = "2014-03-01 00:00:00"
@@ -171,15 +196,16 @@ print(timeStamp)
 #     ↓
 #     1393603200
 
+# In[35]:
+
+
+
+a = "2014年03月02日13:22"
+print(transform_time(a))
+
+
 # In[ ]:
 
 
-file = open('./data/_news_data.json','r',encoding='utf-8')
-s = json.load(file)
-p=0
-print(len(s))
-for a in s:
-    if s[a][2] == 1393603200:
-        p+=1
-print(p)
+
 
