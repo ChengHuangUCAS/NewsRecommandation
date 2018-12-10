@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[7]:
+# In[2]:
 
 
 # -*- coding: utf-8 -*-
@@ -12,7 +12,7 @@ import time
 import operator as op
 
 
-# In[36]:
+# In[8]:
 
 
 def preprocess():
@@ -41,8 +41,8 @@ def preprocess():
         user_id = int(partitions[0])
         news_id = int(partitions[1])
         click_time = int(partitions[2])
-        if partitions[4] == "NULL":
-            #print(partitions[3], tstp)
+        if partitions[4] == "NULL" and partitions[3] == '404':
+#             print(partitions[3])
             continue
         # deal with news_time
         try:
@@ -50,7 +50,7 @@ def preprocess():
         except:
             if partitions[4] == "NULL":
                 continue
-#                 print(partitions[4], len(partitions[4]))
+#             print(partitions[3], (partitions[4]))
             tstp = int(1393603200)
         #data = {"user_id": user_id, "news_id": news_id, "click_time": click_time,
         #       "title": partitions[3], "article": partitions[4], "news_time": tstp}
@@ -72,7 +72,6 @@ def preprocess():
             if len(partitions[4]) > len(news_data[news_id][1]):
                 # if necessary,
                 # update the news info
-                print(1)
                 news_data[news_id][1] = partitions[4]
                 news_data[news_id][2] = tstp
             #if op.eq(partitions[4], news_data[news_id][1]) != 0 and \
@@ -136,16 +135,31 @@ print(timeStamp)
 #     ↓
 #     1393603200
 
-# In[2]:
+# In[18]:
 
 
-file = open('./_user_data_training.json','r',encoding='utf-8')
+file = open('./data/_news_data.json','r',encoding='utf-8')
 s = json.load(file)
-print(s)
+p=0
+print(len(s))
+for a in s:
+    if s[a][2] == 1393603200:
+        p+=1
+print(p)
 
 
 # In[ ]:
 
 
-
+def reclean_news():
+    f_news_data = codecs.open('./data/_news_data.json', 'r', 'utf-8')
+    news_data = json.load(f_news_data)
+    
+    
+    
+    
+    
+    
+    f_news_data.close()
+    
 
