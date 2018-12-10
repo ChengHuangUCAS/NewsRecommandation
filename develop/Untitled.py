@@ -12,7 +12,7 @@ import time
 import operator as op
 
 
-# In[24]:
+# In[36]:
 
 
 def preprocess():
@@ -41,10 +41,16 @@ def preprocess():
         user_id = int(partitions[0])
         news_id = int(partitions[1])
         click_time = int(partitions[2])
+        if partitions[4] == "NULL":
+            #print(partitions[3], tstp)
+            continue
         # deal with news_time
         try:
             tstp = transform_time(partitions[5])  
         except:
+            if partitions[4] == "NULL":
+                continue
+#                 print(partitions[4], len(partitions[4]))
             tstp = int(1393603200)
         #data = {"user_id": user_id, "news_id": news_id, "click_time": click_time,
         #       "title": partitions[3], "article": partitions[4], "news_time": tstp}
@@ -66,6 +72,7 @@ def preprocess():
             if len(partitions[4]) > len(news_data[news_id][1]):
                 # if necessary,
                 # update the news info
+                print(1)
                 news_data[news_id][1] = partitions[4]
                 news_data[news_id][2] = tstp
             #if op.eq(partitions[4], news_data[news_id][1]) != 0 and \
@@ -86,7 +93,6 @@ def preprocess():
     for i in user_list:
         user_data_validation_clean.setdefault(i, user_data_validation[i])
         user_data_training_clean.setdefault(i, user_data_training[i])
-    
     # dump into files
     json.dump(user_data_training_clean, f_user_data_training_clean)
     json.dump(user_data_validation_clean, f_user_data_validation_clean)
