@@ -143,7 +143,8 @@ def k_n_n(news_dict, user_dict, k):
 
 title_scale = 0.5
 doc_scale = 1.0 - title_scale
-news_vector_dict = news_vector_dict(title_scale, doc_scale)
+min_df = 20
+news_vector_dict = news_vector_dict(title_scale, doc_scale, min_df)
 
 
 # In[6]:
