@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+
 # coding: utf-8
 
-# In[35]:
+# In[21]:
 
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -13,30 +13,33 @@ import numpy
 import math
 
 
-# In[36]:
+# In[43]:
 
 
-def news_vector_dict(file_root, title_scale, doc_scale, min_df):
+def news_vector_dict(file_root, title_scale, doc_scale, min_df, max_df):
     file = codecs.open(file_root, 'r', 'utf-8')
     news_dict = json.load(file)
     
     # 分词，在词之间加空格，重新组成文章
-#     stop_file = codecs.open('./data/stop_words.txt', 'r', 'utf-8')
-#     stop_list = stop_file.read().split('\n')
+    stop_file = codecs.open('./data/stop_words.txt', 'r', 'utf-8')
+    stop_list = stop_file.read().split('\n')
     i = 0
     title_array = []
     doc_array = []
     for news_key in news_dict:
         title_text = news_dict[news_key][0]
+        _title = jieba.lcut(title_text)
+        for w in _title[:]:
+            if w.split('.')[0].isdigit():
+                _title.remove(w)
+        title = ' '.join(_title)
+        
         doc_text = news_dict[news_key][1]
-        title = ' '.join(jieba.lcut(title_text))
-        txt = jieba.lcut(doc_text)
-        k = len(txt)-1
-        while k >= 0:
-            if txt[k].isdigit():
-                del(txt[k])
-            k-=1
-        doc = ' '.join(txt)
+        _doc = jieba.lcut(doc_text)
+        for w in _doc[:]:
+            if w.split('.')[0].isdigit():
+                _doc.remove(w)
+        doc = ' '.join(_doc)
         title_array.append(title)
         doc_array.append(doc)
         i += 1
@@ -44,8 +47,12 @@ def news_vector_dict(file_root, title_scale, doc_scale, min_df):
             print(i)
     
     # tf-idf算法，文章转化为一个归一化的向量
-    tfidf_vectorizer = TfidfVectorizer(min_df = min_df)
-    doc_matrix = tfidf_vectorizer.fit_transform(doc_array)
+#     tfidf_vectorizer = TfidfVectorizer(min_df = min_df, stop_words = stop_list)
+    tfidf_vectorizer = TfidfVectorizer(min_df = min_df, max_df = max_df, stop_words = stop_list)
+    tfidf_vectorizer.fit(doc_array)
+    doc_matrix = tfidf_vectorizer.transform(doc_array)
+#     tfidf_vectorizer = TfidfVectorizer(stop_words = stop_list)
+#     tfidf_vectorizer.fit(doc_array)
     title_matrix = tfidf_vectorizer.transform(title_array)
     
     word_bag = {}
@@ -54,19 +61,20 @@ def news_vector_dict(file_root, title_scale, doc_scale, min_df):
     
     # 计算文章加权vector
     news_matrix = (title_matrix.todense() * title_scale + doc_matrix.todense() * doc_scale).tolist()
+#     _t = title_matrix.todense().tolist()
+#     _d = doc_matrix.todense().tolist()
     
     # 构建news_key : vector字典
     i = 0
     news_vector_dict = {}
     for news_key in news_dict:
         news_vector_dict.setdefault(news_key, news_matrix[i])
-        i += 1
         if i % 1000 == 0:
             print('i='+str(i))
-            print(news_matrix[i][:10])
+#             print(news_matrix[i][:10])
             
          #打印文章关键词和权重
-#         if i < 5:
+#         if i < 15:
 #             news_words = []
 #             news_words_weight = []
 #             for j in range(len(news_matrix[i])):
@@ -75,20 +83,46 @@ def news_vector_dict(file_root, title_scale, doc_scale, min_df):
 #                     news_words_weight.append(news_matrix[i][j])
 #             print(news_words)
 #             print(news_words_weight)
-            
+
+#             _t_words = []
+#             _t_words_weight = []
+#             for j in range(len(_t[i])):
+#                 if _t[i][j] > 0:
+#                     _t_words.append(word_bag[j])
+#                     _t_words_weight.append(_t[i][j])
+#             print(_t_words)
+#             print(_t_words_weight)
+#             print(title_array[i])
+#             print(jieba.lcut(news_dict[news_key][0]))
+
+#             _d_words = []
+#             _d_words_weight = []
+#             for j in range(len(_d[i])):
+#                 if _d[i][j] > 0:
+#                     _d_words.append(word_bag[j])
+#                     _d_words_weight.append(_d[i][j])
+#             print(_d_words)
+#             print(_d_words_weight)
+#             print(doc_array[i])
+#             print(jieba.lcut(news_dict[news_key][1]))
+
+            print('-------------------------')
+    
+        i += 1
                     
 
     
     return news_vector_dict
 
 file_root = './data/_news_data_clean.json'
-title_scale = 0.5
+title_scale = 0.6
 doc_scale = 1.0 - title_scale
-min_df = 10
-_news_vector_dict = news_vector_dict(file_root, title_scale, doc_scale, min_df)
+min_df = 5
+max_df = 50
+_news_vector_dict = news_vector_dict(file_root, title_scale, doc_scale, min_df, max_df)
 
 
-# In[37]:
+# In[44]:
 
 
 def time_back(t):
@@ -121,14 +155,13 @@ def user_vector_dict(news_vector_dict):
         if j % 1000 == 0:
             print('j='+str(j))
             print(vector_sum.tolist()[0][:10])
-    print("user_vector construction done.")
     return user_vector_dict
 
 
 _user_vector_dict = user_vector_dict(_news_vector_dict)
 
 
-# In[38]:
+# In[52]:
 
 
 def k_n_n(news_dict, user_dict, k):
@@ -159,15 +192,14 @@ def k_n_n(news_dict, user_dict, k):
             print(i)
     
 #     n = neigh.kneighbors(users)
-#     print(nbrs[:10])
-    print("knn done.")
+    print(nbrs[:10])
     return nbrs
 
-k = 200
+k = 100
 n = k_n_n(_news_vector_dict, _user_vector_dict, k)
 
 
-# In[47]:
+# In[53]:
 
 
 def time_scale(t):
@@ -223,8 +255,38 @@ for user_key in user_news_dict:
 lens.sort()
 print(lens[:10])
 
+# news_keys = []
+# i = 0
+# for news_key in _news_vector_dict:
+#     news_keys.append(news_key)
 
-# In[48]:
+    
+# file = codecs.open('./data/_user_data_training_clean.json', 'r', 'utf-8')
+# user_news_dict = json.load(file)
+
+# result = {}
+# i = 0
+# lens = []
+# for user_key in user_news_dict:
+#     indices = n[2*i+1][0].tolist()
+#     user_news_keys = []
+#     for index in indices:
+#         user_news_key = news_keys[index]
+#         if user_news_key not in user_news_dict[user_key]:
+#             user_news_keys.append(user_news_key)
+#     result.setdefault(user_key, user_news_keys)
+# #     if i < 100:
+# #         print(len(result[user_key]))
+# #         print(result[user_key])
+# #         print(user_news_dict[user_key])
+#     i += 1
+#     lens.append(len(result[user_key]))
+# lens.sort()
+# print(lens[:10])
+
+
+
+# In[54]:
 
 
 # print(1)
@@ -232,47 +294,4 @@ print(lens[:10])
 file_output = codecs.open('./data/tfidf_result.json', 'w', 'utf-8')
 json.dump(result, file_output)
 file_output.close()
-
-
-# In[21]:
-
-
-
-
-
-# In[ ]:
-
-
-# k = 10
-# n = k_n_n(news_vector_dict, user_vector_dict, k)
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
 
