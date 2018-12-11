@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
+# In[1]:
 
 
 # coding: utf-8
@@ -10,7 +10,7 @@ import codecs
 import numpy
 
 
-# In[56]:
+# In[2]:
 
 
 def time_back(t):
@@ -18,7 +18,7 @@ def time_back(t):
     return int(a / 86400)
 
 
-# In[69]:
+# In[39]:
 
 
 def test(result_root):
@@ -36,6 +36,7 @@ def test(result_root):
     user_num = 0
     precision = 0
     recall = 0
+    sum=0
     for key in validation:
         user_num += 1
         if key in result:
@@ -57,11 +58,11 @@ def test(result_root):
 #         for a in training[key]:
 #             print(news_data[a][0])
 #         print("\n")
-
+        sum+=TP
         for a in validation[key]:
             if time_back(news_data[a][2]) < 10:
                 z+=1
-#         if TP==0:
+#         if TP == 0:
 #             print(key)
 #             for a in result[key]:
 #                 print(news_data[a][0], time_back(news_data[a][2]))
@@ -72,14 +73,14 @@ def test(result_root):
 #             for a in training[key]:
 #                 print(news_data[a][0], time_back(news_data[a][2]),time_back(training[key][a]))
 #             print("\n")
-    #     break
+#             break
     
-        #print(precision, recall)
+#         print(precision, recall)
         precision += TP / rec_num
         recall += TP / act_num
-    precision = 100 * precision / user_num 
-    recall = 100 * recall / user_num
-    print(z,q)
+    precision = precision / user_num 
+    recall = recall / user_num
+    print(z,q,sum)
     f_user_data_validation.close()
     f_result.close()
     print("precision: ", precision )
@@ -92,10 +93,16 @@ def test(result_root):
 
 
 
-# In[70]:
+# In[40]:
 
 
 test('./data/tfidf_result.json')
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
