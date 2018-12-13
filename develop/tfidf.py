@@ -13,7 +13,7 @@ import numpy
 import math
 
 
-# In[119]:
+# In[169]:
 
 
 def news_vector_dict(file_root, title_scale, doc_scale, min_df, max_df):
@@ -29,6 +29,7 @@ def news_vector_dict(file_root, title_scale, doc_scale, min_df, max_df):
     i = 0
     title_array = []
     doc_array = []
+    scale = max(int(title_scale / doc_scale), 1)
     for news_key in news_dict:
         title_text = news_dict[news_key][0]
         _title = jieba.lcut(title_text)
@@ -44,24 +45,23 @@ def news_vector_dict(file_root, title_scale, doc_scale, min_df, max_df):
             if w.split('.')[0].isdigit():
                 _doc.remove(w)
         doc = ' '.join(_doc)
+        doc = title * scale + ' ' + doc
         doc_array.append(doc)
         
         i += 1
         if i % 1000 == 0:
             print(i)
     
-    scale = max(int(title_scale / doc_scale), 1)
-    doc_array = title_array * scale + doc_array
     
-    # tf-idf算法，文章转化为一个归一化[并没有]的向量
+    # tf-idf算法，文章转化为一个词向量
     tfidf_vectorizer = TfidfVectorizer(min_df = min_df, max_df = max_df, stop_words = stop_list)
     tfidf_vectorizer.fit(doc_array)
     doc_matrix = tfidf_vectorizer.transform(doc_array)
     news_matrix = doc_matrix.todense().tolist()
     
-#     word_bag = {}
-#     for key in tfidf_vectorizer.vocabulary_:
-#         word_bag.setdefault(tfidf_vectorizer.vocabulary_[key], key)
+    word_bag = {}
+    for key in tfidf_vectorizer.vocabulary_:
+        word_bag.setdefault(tfidf_vectorizer.vocabulary_[key], key)
     
     # 构建news_key : vector字典
     i = 0
@@ -71,20 +71,13 @@ def news_vector_dict(file_root, title_scale, doc_scale, min_df, max_df):
         if i % 1000 == 0:
             print('i='+str(i))
             
-         #打印文章关键词和权重
+#          #打印文章关键词和权重
 #         if i < 15:
-#             news_words = []
-#             news_words_weight = []
 #             for j in range(len(news_matrix[i])):
 #                 if news_matrix[i][j] > 0:
-#                     news_words.append(word_bag[j])
-#                     news_words_weight.append(news_matrix[i][j])
-#             print(news_words)
-#             print(title_array[i])
+#                     print(word_bag[j] + ":" + str(news_matrix[i][j]))
 #             print(doc_array[i])
-#             print(news_words_weight)
-
-            print('-------------------------')
+#             print('-------------------------')
     
         i += 1
 
@@ -94,12 +87,12 @@ file_root = './data/_news_data_clean.json'
 # NOTE: scale = MAX(int(title_scale / doc_scale), 1)
 title_scale = 0.5
 doc_scale = 1.0 - title_scale
-min_df = 3
-max_df = 25
+min_df = 5
+max_df = 30
 _news_vector_dict = news_vector_dict(file_root, title_scale, doc_scale, min_df, max_df)
 
 
-# In[135]:
+# In[175]:
 
 
 def time_back(t):
@@ -121,9 +114,10 @@ def user_vector_dict(news_vector_dict):
         vector_sum = numpy.matrix('0.0')
         for user_news_key in user_dict[user_key]:
             vector = numpy.matrix(news_vector_dict[user_news_key])
+            vector_sum = vector + vector_sum
 #             time_scale = time_back(news_d[user_news_key][2])
-            time_scale = 1
-            vector_sum = vector * time_scale + vector_sum
+#             time_scale = 1
+#             vector_sum = vector * time_scale + vector_sum
             i += 1
         if i != 0:
             vector_sum /= i
@@ -138,7 +132,7 @@ def user_vector_dict(news_vector_dict):
 _user_vector_dict = user_vector_dict(_news_vector_dict)
 
 
-# In[136]:
+# In[217]:
 
 
 def k_n_n(news_dict, user_dict, k):
@@ -168,71 +162,21 @@ def k_n_n(news_dict, user_dict, k):
         if i % 50 == 0:
             print(i)
     
-#     n = neigh.kneighbors(users)
     print(nbrs[:10])
     return nbrs
 
-k = 200
+k = 500
 n = k_n_n(_news_vector_dict, _user_vector_dict, k)
 
 
-# In[137]:
+# In[221]:
 
 
-# def time_scale(t):
-#     day=int((t-1393603200)/86400)
-#     if day < 1:
-#         day = 1
-#     return (math.log(day)+1)
-
-# news_keys = []
-# i = 0
-# for news_key in _news_vector_dict:
-#     news_keys.append(news_key)
-
-    
-# file = codecs.open('./data/_user_data_training_clean.json', 'r', 'utf-8')
-# f_news_data = codecs.open('./data/_news_data_clean.json', 'r', 'utf-8')
-# user_news_dict = json.load(file)
-# news_data = json.load(f_news_data)
-
-# result = {}
-# i = 0
-# lens = []
-# pair = []
-# for user_key in user_news_dict:
-#     dist = n[2*i][0].tolist()
-#     indices = n[2*i+1][0].tolist()
-#     pair = []
-#     for m in range(len(indices)):
-#         mth = indices[m]
-#         news_id = news_keys[mth]
-#         if news_id in user_news_dict[user_key]:
-#             continue
-    
-#         time_ratio = time_scale(news_data[news_id][2])
-#         #print(time_ratio, dist[m], dist[m]*time_ratio)
-#         pair.append([dist[m] * time_ratio, news_id])
-    
-#     pair.sort(key=lambda x:x[0],reverse=True)
-#     user_news_keys = []
-#     for k in range(30):
-#         user_news_keys.append(pair[k][1])
-#     result.setdefault(user_key, user_news_keys)
-#     if i < 10:
-#         for p in pair:
-#             print(p[0], time_scale(news_data[p[1]][2]))
-#         print("\n")
-    
-# #         print(len(result[user_key]))
-# #         print(result[user_key])
-# #         print(user_news_dict[user_key])
-#     i += 1
-#     lens.append(len(result[user_key]))
-# lens.sort()
-# print(lens[:10])
-
-
+def time_scale(t):
+    day=int((t-1393603200)/86400)
+    if day < 1:
+        day = 1
+    return (math.log(day)+1)
 
 news_keys = []
 i = 0
@@ -241,20 +185,38 @@ for news_key in _news_vector_dict:
 
     
 file = codecs.open('./data/_user_data_training_clean.json', 'r', 'utf-8')
+f_news_data = codecs.open('./data/_news_data_clean.json', 'r', 'utf-8')
 user_news_dict = json.load(file)
+news_data = json.load(f_news_data)
 
 result = {}
 i = 0
 lens = []
+pair = []
 for user_key in user_news_dict:
+    dist = n[2*i][0].tolist()
     indices = n[2*i+1][0].tolist()
+    pair = []
+    for m in range(len(indices)):
+        mth = indices[m]
+        news_id = news_keys[mth]
+        if news_id in user_news_dict[user_key] or news_data[news_id][2] < 1393603200:
+            continue
+    
+        time_ratio = time_scale(news_data[news_id][2])
+        #print(time_ratio, dist[m], dist[m]*time_ratio)
+        pair.append([dist[m] * time_ratio, news_id])
+    
+    pair.sort(key=lambda x:x[0],reverse=True)
     user_news_keys = []
-    for index in indices:
-        user_news_key = news_keys[index]
-        if user_news_key not in user_news_dict[user_key]:
-            user_news_keys.append(user_news_key)
+    for k in range(20):
+        user_news_keys.append(pair[k][1])
     result.setdefault(user_key, user_news_keys)
-#     if i < 100:
+    if i < 10:
+        for p in pair:
+            print(p[0], time_scale(news_data[p[1]][2]))
+        print("\n")
+    
 #         print(len(result[user_key]))
 #         print(result[user_key])
 #         print(user_news_dict[user_key])
@@ -265,7 +227,39 @@ print(lens[:10])
 
 
 
-# In[138]:
+# news_keys = []
+# i = 0
+# for news_key in _news_vector_dict:
+#     news_keys.append(news_key)
+
+    
+# file = codecs.open('./data/_user_data_training_clean.json', 'r', 'utf-8')
+# user_news_dict = json.load(file)
+
+# result = {}
+# i = 0
+# lens = []
+# for user_key in user_news_dict:
+#     indices = n[2*i+1][0].tolist()
+#     user_news_keys = []
+#     for index in indices:
+#         user_news_key = news_keys[index]
+#         if user_news_key not in user_news_dict[user_key]:
+#             user_news_keys.append(user_news_key)
+#     result.setdefault(user_key, user_news_keys)
+# #     if i < 100:
+# #         print(len(result[user_key]))
+# #         print(result[user_key])
+# #         print(user_news_dict[user_key])
+#     i += 1
+#     lens.append(len(result[user_key]))
+# print(lens[:10])
+# lens.sort()
+# print(lens[:10])
+
+
+
+# In[222]:
 
 
 file_output = codecs.open('./data/tfidf_result.json', 'w', 'utf-8')
@@ -273,7 +267,7 @@ json.dump(result, file_output)
 file_output.close()
 
 
-# In[139]:
+# In[223]:
 
 
 def time_back(t):
@@ -346,11 +340,4 @@ def test(result_root):
     print("recall: ", recall)
 
 test('./data/tfidf_result.json')
-
-
-# In[141]:
-
-
-tfidf_vectorizer = TfidfVectorizer()
-help(tfidf_vectorizer)
 
