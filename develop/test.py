@@ -1,14 +1,22 @@
+
 # coding: utf-8
-from __future__ import division
+
+# In[ ]:
+
+
+# coding: utf-8
 import json
 import codecs
 
+
+# In[ ]:
+
+
 def test(result_root):
-    datapath = 'data/'
     f_result = codecs.open(result_root, 'r', 'utf-8')
-    f_news_data = codecs.open(datapath + '_news_data.json', 'r', 'utf-8')
-    f_user_data_training = codecs.open(datapath + '_user_data_training_clean.json', 'r', 'utf-8')
-    f_user_data_validation = codecs.open(datapath + '_user_data_validation_clean.json', 'r', 'utf-8')
+    f_news_data = codecs.open('./data/_news_data.json', 'r', 'utf-8')
+    f_user_data_training = codecs.open('./data/_user_data_training_clean.json', 'r', 'utf-8')
+    f_user_data_validation = codecs.open('./data/_user_data_validation_clean.json', 'r', 'utf-8')
     validation = json.load(f_user_data_validation)
     training = json.load(f_user_data_training)
     result = json.load(f_result)
@@ -57,24 +65,15 @@ def test(result_root):
     recall += TP / act_num
 #     precision = precision / user_num 
 #     recall = recall / user_num
-    try :
-        f1 += 2*(precision*recall)/(precision+recall)
-    except:
-        f1 = 0
-    print "number of records in validation set: " + str(z)
-    print "shot:                                " + str(q)
-    print "hits:                                " + str(TP)
+    f1 += 2*(precision*recall)/(precision+recall)
+    print("number of records in validation set:", z)
+    print("shot:                               ", q)
+    print("hits:                               ", TP)
     f_user_data_validation.close()
     f_result.close()
-    print "precision: " + str(precision)
-    print "recall:    " + str(recall)
-    print "f1:        " + str(f1)
+    print("precision: ", precision )
+    print("recall:    ", recall)
+    print("f1:        ", f1)
 
-if __name__ == '__main__':
-    print '>>>>>>test nmf<<<<<<'
-    test('data/nmf_pred_matrix.json')
-    #print '>>>>>>test userbase<<<<<<'
-    #test('../data/user_based_pred_matrix.json')
-    print '>>>>>>test knn<<<<<<'
-    test('data/knn_pred_matrix.json')
+test('./data/tfidf_result.json')
 
