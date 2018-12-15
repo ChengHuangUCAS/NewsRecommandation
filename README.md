@@ -1,4 +1,4 @@
-#Recommender  
+## Recommender  
 A simple news recommender implemented follow algorithm:  
 * content based knn
 * collaboration filter nmf
