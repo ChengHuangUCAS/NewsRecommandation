@@ -1,14 +1,11 @@
-## Recommender  
-A simple news recommender implemented follow algorithm:  
-* content based knn
-* collaboration filter nmf
+#recommender
 
-#### Environment & packages
+#### environment & packages
 * linux
 * python2  
 * json, numpy, sklearn, jieba  
 
-#### How to run
+#### how to run
 * `$cd path/to/RecommendationSystem`
 * `$cp path/to/user_click_data.txt ./data`
 * `$export PYTHONPATH=./:$PATHONPATH`
@@ -16,7 +13,7 @@ A simple news recommender implemented follow algorithm:
 * `$python recommender/recommender.py`
 * `$python test/test.py`
 
-#### File tree
+#### file tree
 ```
 RecommendationSystem:
 |--algorithm:  
